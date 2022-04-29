@@ -19,8 +19,7 @@ const fs = require('fs');
 const http = require('http');
 const https = require('https');
 
-if (process.versions.node.split('.')[0] < 15)
-{
+if (process.versions.node.split('.')[0] < 15) {
 	/* eslint-disable no-unused-vars */
 	const spdy = require('spdy');
 }
@@ -46,8 +45,7 @@ const RedisStore = require('connect-redis')(expressSession);
 const sharedSession = require('express-socket.io-session');
 const { v4: uuidv4 } = require('uuid');
 
-if (configError)
-{
+if (configError) {
 	/* eslint-disable no-console */
 	console.error(`Invalid config file: ${configError}`);
 	process.exit(-1);
@@ -82,10 +80,10 @@ const peers = new Map();
 // TLS server configuration.
 const tls =
 {
-	cert          : fs.readFileSync(config.tls.cert),
-	key           : fs.readFileSync(config.tls.key),
-	secureOptions : 'tlsv12',
-	ciphers       :
+	cert: fs.readFileSync(config.tls.cert),
+	key: fs.readFileSync(config.tls.key),
+	secureOptions: 'tlsv12',
+	ciphers:
 		[
 			'ECDHE-ECDSA-AES128-GCM-SHA256',
 			'ECDHE-RSA-AES128-GCM-SHA256',
@@ -96,7 +94,7 @@ const tls =
 			'DHE-RSA-AES128-GCM-SHA256',
 			'DHE-RSA-AES256-GCM-SHA384'
 		].join(':'),
-	honorCipherOrder : true
+	honorCipherOrder: true
 };
 
 const app = express();
@@ -109,32 +107,29 @@ app.use(bodyParser.json({ limit: '5mb' }));
 app.use(bodyParser.urlencoded({ limit: '5mb', extended: true }));
 
 const session = expressSession({
-	secret            : config.cookieSecret,
-	name              : config.cookieName,
-	resave            : true,
-	saveUninitialized : true,
-	store             : new RedisStore({ client: redisClient }),
-	cookie            : {
-		secure   : true,
-		httpOnly : true,
-		maxAge   : 60 * 60 * 1000 // Expire after 1 hour since last request from user
+	secret: config.cookieSecret,
+	name: config.cookieName,
+	resave: true,
+	saveUninitialized: true,
+	store: new RedisStore({ client: redisClient }),
+	cookie: {
+		secure: true,
+		httpOnly: true,
+		maxAge: 60 * 60 * 1000 // Expire after 1 hour since last request from user
 	}
 });
 
-if (config.trustProxy)
-{
+if (config.trustProxy) {
 	app.set('trust proxy', config.trustProxy);
 }
 
 app.use(session);
 
-passport.serializeUser((user, done) =>
-{
+passport.serializeUser((user, done) => {
 	done(null, user);
 });
 
-passport.deserializeUser((user, done) =>
-{
+passport.deserializeUser((user, done) => {
 	done(null, user);
 });
 
@@ -145,19 +140,14 @@ let oidcStrategy;
 let samlStrategy;
 let localStrategy;
 
-async function run()
-{
-	try
-	{
+async function run() {
+	try {
 		// Open the interactive server.
 		await interactiveServer(rooms, peers);
 
-		if (typeof (config.auth) === 'undefined')
-		{
+		if (typeof (config.auth) === 'undefined') {
 			logger.warn('Auth is not configured properly!');
-		}
-		else
-		{
+		} else {
 			await setupAuth();
 		}
 
@@ -168,8 +158,7 @@ async function run()
 		await runHttpsServer();
 
 		// start Prometheus exporter
-		if (config.prometheus.enabled)
-		{
+		if (config.prometheus.enabled) {
 			await promExporter(mediasoupWorkers, rooms, peers);
 		}
 
@@ -177,8 +166,7 @@ async function run()
 		await runWebSocketServer();
 
 		// eslint-disable-next-line no-unused-vars
-		const errorHandler = (err, req, res, next) =>
-		{
+		const errorHandler = (err, req, res, next) => {
 			const trackingId = uuidv4();
 
 			res.status(500).send(
@@ -195,26 +183,21 @@ async function run()
 
 		// eslint-disable-next-line no-unused-vars
 		app.use(errorHandler);
-	}
-	catch (error)
-	{
+	} catch (error) {
 		logger.error('run() [error:"%o"]', error);
 	}
 }
 
-function statusLog()
-{
-	if (statusLogger)
-	{
+function statusLog() {
+	if (statusLogger) {
 		statusLogger.log({
-			rooms : rooms,
-			peers : peers
+			rooms: rooms,
+			peers: peers
 		});
 	}
 }
 
-function setupLTI(ltiConfig)
-{
+function setupLTI(ltiConfig) {
 
 	// Add redis nonce store
 	ltiConfig.nonceStore = new imsLti.Stores.RedisStore(ltiConfig.consumerKey, redisClient);
@@ -222,38 +205,29 @@ function setupLTI(ltiConfig)
 
 	const ltiStrategy = new LTIStrategy(
 		ltiConfig,
-		(req, lti, done) =>
-		{
+		(req, lti, done) => {
 			// LTI launch parameters
-			if (lti)
-			{
+			if (lti) {
 				const user = {};
 
-				if (lti.user_id && lti.custom_room)
-				{
+				if (lti.user_id && lti.custom_room) {
 					user.id = lti.user_id;
 					user._userinfo = { 'lti': lti };
 				}
 
-				if (lti.custom_room)
-				{
+				if (lti.custom_room) {
 					user.room = lti.custom_room;
-				}
-				else
-				{
+				} else {
 					user.room = '';
 				}
-				if (lti.lis_person_name_full)
-				{
+				if (lti.lis_person_name_full) {
 					user.displayName = lti.lis_person_name_full;
 				}
 
 				// Perform local authentication if necessary
 				return done(null, user);
 
-			}
-			else
-			{
+			} else {
 				return done('LTI error');
 			}
 
@@ -263,16 +237,14 @@ function setupLTI(ltiConfig)
 	passport.use('lti', ltiStrategy);
 }
 
-function setupSAML()
-{
+function setupSAML() {
 	samlStrategy = new SAMLStrategy(
 		config.auth.saml,
-		function(profile, done)
-		{
+		function(profile, done) {
 			return done(null,
 				{
-					id        : profile.uid,
-					_userinfo : profile
+					id: profile.uid,
+					_userinfo: profile
 				});
 		}
 	);
@@ -280,13 +252,10 @@ function setupSAML()
 	passport.use('saml', samlStrategy);
 }
 
-function setupLocal()
-{
+function setupLocal() {
 	localStrategy = new LocalStrategy(
-		function(username, plaintextPassword, done)
-		{
-			const found = config.auth.local.users.find((element) =>
-			{
+		function(username, plaintextPassword, done) {
+			const found = config.auth.local.users.find((element) => {
 				// TODO use encrypted password
 				return element.username === username &&
 					bcrypt.compareSync(plaintextPassword, element.passwordHash);
@@ -294,8 +263,7 @@ function setupLocal()
 
 			if (found === undefined)
 				return done(null, null);
-			else
-			{
+			else {
 				const userinfo = { ...found };
 
 				delete userinfo.password;
@@ -308,8 +276,7 @@ function setupLocal()
 	passport.use('local', localStrategy);
 }
 
-function setupOIDC(oidcIssuer)
-{
+function setupOIDC(oidcIssuer) {
 
 	oidcClient = new oidcIssuer.Client(config.auth.oidc.clientOptions);
 
@@ -342,19 +309,17 @@ function setupOIDC(oidcIssuer)
 
 	oidcStrategy = new Strategy(
 		{ client: oidcClient, params, passReqToCallback, usePKCE },
-		(tokenset, userinfo, done) =>
-		{
-			if (userinfo && tokenset)
-			{
+		(tokenset, userinfo, done) => {
+			if (userinfo && tokenset) {
 				// eslint-disable-next-line camelcase
 				userinfo._tokenset_claims = tokenset.claims();
 			}
 
 			const user =
 			{
-				id        : tokenset.claims.sub,
-				provider  : tokenset.claims.iss,
-				_userinfo : userinfo
+				id: tokenset.claims.sub,
+				provider: tokenset.claims.iss,
+				_userinfo: userinfo
 			};
 
 			return done(null, user);
@@ -364,8 +329,7 @@ function setupOIDC(oidcIssuer)
 	passport.use('oidc', oidcStrategy);
 }
 
-async function setupAuth()
-{
+async function setupAuth() {
 	// LTI
 	if (
 		typeof (config.auth.lti) !== 'undefined' &&
@@ -387,10 +351,8 @@ async function setupAuth()
 		typeof (config.auth.oidc) !== 'undefined' &&
 		typeof (config.auth.oidc.issuerURL) !== 'undefined' &&
 		typeof (config.auth.oidc.clientOptions) !== 'undefined'
-	)
-	{
-		if (config.auth.oidc.HttpOptions)
-		{
+	) {
+		if (config.auth.oidc.HttpOptions) {
 			// Set http options to allow e.g. http proxy
 			// TODO check with Misi what this is about
 			custom.setHttpOptionsDefaults(config.auth.oidc.HttpOptions);
@@ -412,8 +374,7 @@ async function setupAuth()
 		typeof (config.auth.saml.entryPoint) !== 'undefined' &&
 		typeof (config.auth.saml.issuer) !== 'undefined' &&
 		typeof (config.auth.saml.cert) !== 'undefined'
-	)
-	{
+	) {
 		setupSAML();
 	}
 
@@ -424,8 +385,7 @@ async function setupAuth()
 		config.auth.strategy === 'local' &&
 		typeof (config.auth.local) !== 'undefined' &&
 		typeof (config.auth.local.users) !== 'undefined'
-	)
-	{
+	) {
 		setupLocal();
 	}
 
@@ -436,33 +396,27 @@ async function setupAuth()
 	const authStrategy = (config.auth && config.auth.strategy) ? config.auth.strategy : 'oidc';
 
 	// loginparams
-	app.get('/auth/login', (req, res, next) =>
-	{
+	app.get('/auth/login', (req, res, next) => {
 		logger.debug('/auth/login');
 
 		let state;
 
-		if (req.query.peerId && req.query.roomId)
-		{
+		if (req.query.peerId && req.query.roomId) {
 			state = {
-				peerId : req.query.peerId,
-				roomId : req.query.roomId
+				peerId: req.query.peerId,
+				roomId: req.query.roomId
 			};
 
-			if (authStrategy== 'saml' || authStrategy=='local')
-			{
+			if (authStrategy== 'saml' || authStrategy=='local') {
 				req.session.authState=state;
 			}
 		}
 
-		if (authStrategy === 'local' && !(req.user && req.password))
-		{
+		if (authStrategy === 'local' && !(req.user && req.password)) {
 			res.redirect('/login_dialog');
-		}
-		else
-		{
+		} else {
 			passport.authenticate(authStrategy, {
-				state : base64.encode(JSON.stringify(state))
+				state: base64.encode(JSON.stringify(state))
 			}
 			)(req, res, next);
 		}
@@ -471,20 +425,17 @@ async function setupAuth()
 	// lti launch
 	app.post('/auth/lti',
 		passport.authenticate('lti', { failureRedirect: '/' }),
-		(req, res) =>
-		{
+		(req, res) => {
 			logger.debug('/auth/lti');
 			res.redirect(`/${req.user.room}`);
 		}
 	);
 
-	app.get('/auth/check_login_status', (req, res) =>
-	{
+	app.get('/auth/check_login_status', (req, res) => {
 		let loggedIn = false;
 
 		if (Boolean(req.session.passport) &&
-			Boolean(req.session.passport.user))
-		{
+			Boolean(req.session.passport.user)) {
 			loggedIn = true;
 		}
 
@@ -492,17 +443,14 @@ async function setupAuth()
 	});
 
 	// logout
-	app.get('/auth/logout', (req, res) =>
-	{
+	app.get('/auth/logout', (req, res) => {
 		logger.debug('/auth/logout');
 		const { peerId } = req.session;
 
 		const peer = peers.get(peerId);
 
-		if (peer)
-		{
-			for (const role of peer.roles)
-			{
+		if (peer) {
+			for (const role of peer.roles) {
 				if (role.id !== userRoles.NORMAL.id)
 					peer.removeRole(role);
 			}
@@ -515,29 +463,23 @@ async function setupAuth()
 		req.session.destroy(() => res.send(logoutHelper()));
 	});
 	// SAML metadata
-	app.get('/auth/metadata', (req, res) =>
-	{
+	app.get('/auth/metadata', (req, res) => {
 		logger.debug('/auth/metadata');
 		if (config.auth && config.auth.saml &&
 			config.auth.saml.decryptionCert &&
-			config.auth.saml.signingCert)
-		{
+			config.auth.saml.signingCert) {
 			const metadata = samlStrategy.generateServiceProviderMetadata(
 				config.auth.saml.decryptionCert,
 				config.auth.saml.signingCert
 			);
 
-			if (metadata)
-			{
+			if (metadata) {
 				res.set('Content-Type', 'text/xml');
 				res.send(metadata);
-			}
-			else
-			{
+			} else {
 				res.status('Error generating SAML metadata', 500);
 			}
-		}
-		else
+		} else
 			res.status('Missing SAML decryptionCert or signingKey from config', 500);
 	});
 
@@ -545,25 +487,21 @@ async function setupAuth()
 	app.all(
 		'/auth/callback',
 		passport.authenticate(authStrategy, { failureRedirect: '/auth/login' }),
-		async (req, res, next) =>
-		{
+		async (req, res, next) => {
 			logger.debug('/auth/callback');
-			try
-			{
+			try {
 				let state;
 
 				if (authStrategy == 'saml' || authStrategy == 'local')
 					state=req.session.authState;
-				else
-				{
+				else {
 					if (req.method === 'GET')
 						state = JSON.parse(base64.decode(req.query.state));
 					if (req.method === 'POST')
 						state = JSON.parse(base64.decode(req.body.state));
 				}
 
-				if (!state || !state.peerId || !state.roomId)
-				{
+				if (!state || !state.peerId || !state.roomId) {
 					res.redirect('/auth/login');
 					logger.debug('Empty state or state.peerId or state.roomId in auth/callback');
 				}
@@ -582,49 +520,40 @@ async function setupAuth()
 				if (peer.roomId !== roomId) // The peer is mischievous
 					throw new Error('peer authenticated with wrong room');
 
-				if (typeof config.userMapping === 'function')
-				{
+				if (typeof config.userMapping === 'function') {
 					await config.userMapping({
 						peer,
 						room,
 						roomId,
-						userinfo : req.user._userinfo
+						userinfo: req.user._userinfo
 					});
 				}
 
 				peer.authenticated = true;
 
 				res.send(loginHelper({
-					displayName : peer.displayName,
-					picture     : peer.picture
+					displayName: peer.displayName,
+					picture: peer.picture
 				}));
-			}
-			catch (error)
-			{
+			} catch (error) {
 				return next(error);
 			}
 		}
 	);
 }
 
-async function runHttpsServer()
-{
+async function runHttpsServer() {
 	app.use(compression());
 
 	app.use('/.well-known/acme-challenge', express.static('dist/public/.well-known/acme-challenge'));
 
-	app.all('*', async (req, res, next) =>
-	{
-		if (req.secure || config.httpOnly)
-		{
+	app.all('*', async (req, res, next) => {
+		if (req.secure || config.httpOnly) {
 			let ltiURL;
 
-			try
-			{
+			try {
 				ltiURL = new URL(`${req.protocol}://${req.get('host')}${req.originalUrl}`);
-			}
-			catch (error)
-			{
+			} catch (error) {
 				logger.error('Error parsing LTI url: %o', error);
 			}
 
@@ -634,55 +563,45 @@ async function runHttpsServer()
 				req.user.displayName &&
 				!ltiURL.searchParams.get('displayName') &&
 				!isPathAlreadyTaken(req.url)
-			)
-			{
+			) {
 
 				ltiURL.searchParams.append('displayName', req.user.displayName);
 
 				res.redirect(ltiURL);
-			}
-			else
+			} else
 				return next();
-		}
-		else
+		} else
 			res.redirect(`https://${req.hostname}${req.url}`);
 
 	});
 
 	// Serve all files in the public folder as static files.
 	app.use(express.static('dist/public', {
-		maxAge : config.staticFilesCachePeriod
+		maxAge: config.staticFilesCachePeriod
 	}));
 
 	app.use((req, res) => res.sendFile(`${__dirname}/public/index.html`, {
-		maxAge : config.staticFilesCachePeriod
+		maxAge: config.staticFilesCachePeriod
 	}));
 
-	if (config.httpOnly === true)
-	{
+	if (config.httpOnly === true) {
 		// http
 		mainListener = http.createServer(app);
-	}
-	else
-	{
+	} else {
 		// https
 		// spdy is not working anymore with node.js > 15 and express 5 
 		// is not ready yet for http2
 		// https://github.com/spdy-http2/node-spdy/issues/380
-		if (typeof(spdy) === 'undefined')
-		{
+		if (typeof(spdy) === 'undefined') {
 			logger.info('Found node.js version >= 15 disabling spdy / http2 and using node.js/https module');
 			mainListener = https.createServer(tls, app);
-		}
-		else
-		{
+		} else {
 			/* eslint-disable no-undef */
 			mainListener = spdy.createServer(tls, app);
 		}
 
 		// http -> https redirect server
-		if (config.listeningRedirectPort)
-		{
+		if (config.listeningRedirectPort) {
 			const redirectListener = http.createServer(app);
 
 			if (config.listeningHost)
@@ -699,8 +618,7 @@ async function runHttpsServer()
 		mainListener.listen(config.listeningPort);
 }
 
-function isPathAlreadyTaken(actualUrl)
-{
+function isPathAlreadyTaken(actualUrl) {
 	const alreadyTakenPath =
 		[
 			'/config/',
@@ -711,8 +629,7 @@ function isPathAlreadyTaken(actualUrl)
 			'/auth/'
 		];
 
-	alreadyTakenPath.forEach((path) =>
-	{
+	alreadyTakenPath.forEach((path) => {
 		if (actualUrl.toString().startsWith(path))
 			return true;
 	});
@@ -723,11 +640,10 @@ function isPathAlreadyTaken(actualUrl)
 /**
  * Create a WebSocketServer to allow WebSocket connections from browsers.
  */
-async function runWebSocketServer()
-{
+async function runWebSocketServer() {
 	io = require('socket.io')(mainListener, {
 		cors: {
-			origins: ["*"]
+			origins: [ '*' ]
 		},
 		cookie: false
 	});
@@ -737,12 +653,10 @@ async function runWebSocketServer()
 	);
 
 	// Handle connections from clients.
-	io.on('connection', (socket) =>
-	{
+	io.on('connection', (socket) => {
 		const { roomId, peerId } = socket.handshake.query;
 
-		if (!roomId || !peerId)
-		{
+		if (!roomId || !peerId) {
 			logger.warn('connection request without roomId and/or peerId');
 
 			socket.disconnect(true);
@@ -753,27 +667,23 @@ async function runWebSocketServer()
 		logger.info(
 			'connection request [roomId:"%s", peerId:"%s"]', roomId, peerId);
 
-		queue.push(async () =>
-		{
+		queue.push(async () => {
 			const room = await getOrCreateRoom({ roomId });
 			let token = null;
 
-			if (socket.handshake.session.peerId === peerId)
-			{
+			if (socket.handshake.session.peerId === peerId) {
 				token = room.getToken(peerId);
 			}
 
 			let peer = peers.get(peerId);
 			let returning = false;
 
-			if (peer && !token)
-			{ // Don't allow hijacking sessions
+			if (peer && !token) { // Don't allow hijacking sessions
 				socket.disconnect(true);
 
 				return;
-			}
-			else if (token && room.verifyPeer({ id: peerId, token }))
-			{ // Returning user, remove if old peer exists
+			} else if (token && room.verifyPeer({ id: peerId, token })) {
+				// Returning user, remove if old peer exists
 				if (peer)
 					peer.close();
 
@@ -784,8 +694,7 @@ async function runWebSocketServer()
 
 			peers.set(peerId, peer);
 
-			peer.on('close', () =>
-			{
+			peer.on('close', () => {
 				peers.delete(peerId);
 
 				statusLog();
@@ -794,8 +703,7 @@ async function runWebSocketServer()
 			if (
 				Boolean(socket.handshake.session.passport) &&
 				Boolean(socket.handshake.session.passport.user)
-			)
-			{
+			) {
 				const {
 					id,
 					displayName,
@@ -810,8 +718,7 @@ async function runWebSocketServer()
 				peer.email = email;
 				peer.authenticated = true;
 
-				if (typeof config.userMapping === 'function')
-				{
+				if (typeof config.userMapping === 'function') {
 					await config.userMapping({ peer, room, roomId, userinfo: _userinfo });
 				}
 			}
@@ -824,8 +731,7 @@ async function runWebSocketServer()
 
 			statusLog();
 		})
-			.catch((error) =>
-			{
+			.catch((error) => {
 				logger.error('room creation or room joining failed [error:"%o"]', error);
 
 				if (socket)
@@ -839,10 +745,8 @@ async function runWebSocketServer()
 /**
  * Launch as many mediasoup Workers as given in the configuration file.
  */
-async function runMediasoupWorkers()
-{
-	mediasoup.observer.on('newworker', (worker) =>
-	{
+async function runMediasoupWorkers() {
+	mediasoup.observer.on('newworker', (worker) => {
 		worker.appData.routers = new Map();
 		worker.appData.transports = new Map();
 		worker.appData.producers = new Map();
@@ -850,14 +754,12 @@ async function runMediasoupWorkers()
 		worker.appData.dataProducers = new Map();
 		worker.appData.dataConsumers = new Map();
 
-		worker.observer.on('close', () =>
-		{
+		worker.observer.on('close', () => {
 			// not needed as we have 'died' listiner below
 			logger.debug('worker closed [worker.pid:%d]', worker.pid);
 		});
 
-		worker.observer.on('newrouter', (router) =>
-		{
+		worker.observer.on('newrouter', (router) => {
 			router.appData.transports = new Map();
 			router.appData.producers = new Map();
 			router.appData.consumers = new Map();
@@ -866,13 +768,11 @@ async function runMediasoupWorkers()
 			router.appData.worker = worker;
 			worker.appData.routers.set(router.id, router);
 
-			router.observer.on('close', () =>
-			{
+			router.observer.on('close', () => {
 				worker.appData.routers.delete(router.id);
 			});
 
-			router.observer.on('newtransport', (transport) =>
-			{
+			router.observer.on('newtransport', (transport) => {
 				transport.appData.producers = new Map();
 				transport.appData.consumers = new Map();
 				transport.appData.dataProducers = new Map();
@@ -880,65 +780,56 @@ async function runMediasoupWorkers()
 				transport.appData.router = router;
 				router.appData.transports.set(transport.id, transport);
 
-				transport.observer.on('close', () =>
-				{
+				transport.observer.on('close', () => {
 					router.appData.transports.delete(transport.id);
 				});
 
-				transport.observer.on('newproducer', (producer) =>
-				{
+				transport.observer.on('newproducer', (producer) => {
 					producer.appData.transport = transport;
 					transport.appData.producers.set(producer.id, producer);
 					router.appData.producers.set(producer.id, producer);
 					worker.appData.producers.set(producer.id, producer);
 
-					producer.observer.on('close', () =>
-					{
+					producer.observer.on('close', () => {
 						transport.appData.producers.delete(producer.id);
 						router.appData.producers.delete(producer.id);
 						worker.appData.producers.delete(producer.id);
 					});
 				});
 
-				transport.observer.on('newconsumer', (consumer) =>
-				{
+				transport.observer.on('newconsumer', (consumer) => {
 					consumer.appData.transport = transport;
 					transport.appData.consumers.set(consumer.id, consumer);
 					router.appData.consumers.set(consumer.id, consumer);
 					worker.appData.consumers.set(consumer.id, consumer);
 
-					consumer.observer.on('close', () =>
-					{
+					consumer.observer.on('close', () => {
 						transport.appData.consumers.delete(consumer.id);
 						router.appData.consumers.delete(consumer.id);
 						worker.appData.consumers.delete(consumer.id);
 					});
 				});
 
-				transport.observer.on('newdataproducer', (dataProducer) =>
-				{
+				transport.observer.on('newdataproducer', (dataProducer) => {
 					dataProducer.appData.transport = transport;
 					transport.appData.dataProducers.set(dataProducer.id, dataProducer);
 					router.appData.dataProducers.set(dataProducer.id, dataProducer);
 					worker.appData.dataProducers.set(dataProducer.id, dataProducer);
 
-					dataProducer.observer.on('close', () =>
-					{
+					dataProducer.observer.on('close', () => {
 						transport.appData.dataProducers.delete(dataProducer.id);
 						router.appData.dataProducers.delete(dataProducer.id);
 						worker.appData.dataProducers.delete(dataProducer.id);
 					});
 				});
 
-				transport.observer.on('newdataconsumer', (dataConsumer) =>
-				{
+				transport.observer.on('newdataconsumer', (dataConsumer) => {
 					dataConsumer.appData.transport = transport;
 					transport.appData.dataConsumers.set(dataConsumer.id, dataConsumer);
 					router.appData.dataConsumers.set(dataConsumer.id, dataConsumer);
 					worker.appData.dataConsumers.set(dataConsumer.id, dataConsumer);
 
-					dataConsumer.observer.on('close', () =>
-					{
+					dataConsumer.observer.on('close', () => {
 						transport.appData.dataConsumers.delete(dataConsumer.id);
 						router.appData.dataConsumers.delete(dataConsumer.id);
 						worker.appData.dataConsumers.delete(dataConsumer.id);
@@ -955,19 +846,17 @@ async function runMediasoupWorkers()
 	const { logLevel, logTags, rtcMinPort, rtcMaxPort } = config.mediasoup.worker;
 	const portInterval = Math.floor((rtcMaxPort - rtcMinPort) / numWorkers);
 
-	for (let i = 0; i < numWorkers; i++)
-	{
+	for (let i = 0; i < numWorkers; i++) {
 		const worker = await mediasoup.createWorker(
 			{
 				logLevel,
 				logTags,
-				rtcMinPort : rtcMinPort + (i * portInterval),
-				rtcMaxPort : i === numWorkers - 1 ? rtcMaxPort
+				rtcMinPort: rtcMinPort + (i * portInterval),
+				rtcMaxPort: i === numWorkers - 1 ? rtcMaxPort
 					: rtcMinPort + ((i + 1) * portInterval) - 1
 			});
 
-		worker.on('died', () =>
-		{
+		worker.on('died', () => {
 			logger.error(
 				'mediasoup Worker died, exiting  in 2 seconds... [pid:%d]', worker.pid);
 
@@ -981,13 +870,11 @@ async function runMediasoupWorkers()
 /**
  * Get a Room instance (or create one if it does not exist).
  */
-async function getOrCreateRoom({ roomId })
-{
+async function getOrCreateRoom({ roomId }) {
 	let room = rooms.get(roomId);
 
 	// If the Room does not exist create a new one.
-	if (!room)
-	{
+	if (!room) {
 		logger.info('creating a new Room [roomId:"%s"]', roomId);
 
 		// const mediasoupWorker = getMediasoupWorker();
@@ -998,8 +885,7 @@ async function getOrCreateRoom({ roomId })
 
 		statusLog();
 
-		room.on('close', () =>
-		{
+		room.on('close', () => {
 			rooms.delete(roomId);
 
 			statusLog();
