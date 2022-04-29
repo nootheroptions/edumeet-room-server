@@ -1,14 +1,14 @@
 node_modules/
 
-config/
+/config/**
 !/config/config.example.*
 !/config/README.md
 
-public/
-dist/
+/public/
+/dist/
 
-certs/
-!/certs/edumeet-demo*
+/certs/**
+!/certs/edumeet-*
 
 .vscode
 yarn-error.log
