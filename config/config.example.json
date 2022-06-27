@@ -9,6 +9,15 @@
     "key"  : "./certs/edumeet-demo-key.pem"
   },
 
+  "rtcStatsOptions": {
+		"url": "",
+		"useLegacy": false,
+		"obfuscate": false,
+		"wsPingIntervalMs": 3000,
+		"pollIntervalMs": 2000,
+		"sendSDP": false
+	},
+
   "turnAPIKey" : "Your API key",
   "turnAPIURI" : "https://host.domain.tld/turn",
 

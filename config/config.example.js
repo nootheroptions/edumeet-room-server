@@ -217,46 +217,35 @@ module.exports =
 	},
 	*/
 	// eslint-disable-next-line no-unused-vars
-	userMapping : async ({ peer, room, roomId, userinfo }) =>
-	{
-		if (userinfo.picture != null)
-		{
-			if (!userinfo.picture.match(/^http/g))
-			{
+	userMapping: async ({ peer, room, roomId, userinfo }) => {
+		if (userinfo.picture != null) {
+			if (!userinfo.picture.match(/^http/g)) {
 				peer.picture = `data:image/jpeg;base64, ${userinfo.picture}`;
-			}
-			else
-			{
+			} else {
 				peer.picture = userinfo.picture;
 			}
 		}
-		if (userinfo['urn:oid:0.9.2342.19200300.100.1.60'] != null)
-		{
+		if (userinfo['urn:oid:0.9.2342.19200300.100.1.60'] != null) {
 			peer.picture = `data:image/jpeg;base64, ${userinfo['urn:oid:0.9.2342.19200300.100.1.60']}`;
 		}
 
-		if (userinfo.nickname != null)
-		{
+		if (userinfo.nickname != null) {
 			peer.displayName = userinfo.nickname;
 		}
 
-		if (userinfo.name != null)
-		{
+		if (userinfo.name != null) {
 			peer.displayName = userinfo.name;
 		}
 
-		if (userinfo.displayName != null)
-		{
+		if (userinfo.displayName != null) {
 			peer.displayName = userinfo.displayName;
 		}
 
-		if (userinfo['urn:oid:2.16.840.1.113730.3.1.241'] != null)
-		{
+		if (userinfo['urn:oid:2.16.840.1.113730.3.1.241'] != null) {
 			peer.displayName = userinfo['urn:oid:2.16.840.1.113730.3.1.241'];
 		}
 
-		if (userinfo.email != null)
-		{
+		if (userinfo.email != null) {
 			peer.email = userinfo.email;
 		}
 	},
@@ -266,49 +255,49 @@ module.exports =
 	//
 	// Example:
 	// [ userRoles.MODERATOR, userRoles.AUTHENTICATED ]
-	accessFromRoles : {
+	accessFromRoles: {
 		// The role(s) will gain access to the room
 		// even if it is locked (!)
-		[BYPASS_ROOM_LOCK] : [ userRoles.ADMIN ],
+		[BYPASS_ROOM_LOCK]: [ userRoles.ADMIN ],
 		// The role(s) will gain access to the room without
 		// going into the lobby. If you want to restrict access to your
 		// server to only directly allow authenticated users, you could
 		// add the userRoles.AUTHENTICATED to the user in the userMapping
 		// function, and change to BYPASS_LOBBY : [ userRoles.AUTHENTICATED ]
-		[BYPASS_LOBBY]     : [ userRoles.NORMAL ]
+		[BYPASS_LOBBY]: [ userRoles.NORMAL ]
 	},
-	permissionsFromRoles : {
+	permissionsFromRoles: {
 		// The role(s) have permission to lock/unlock a room
-		[CHANGE_ROOM_LOCK]  : [ userRoles.MODERATOR ],
+		[CHANGE_ROOM_LOCK]: [ userRoles.MODERATOR ],
 		// The role(s) have permission to promote a peer from the lobby
-		[PROMOTE_PEER]      : [ userRoles.NORMAL ],
+		[PROMOTE_PEER]: [ userRoles.NORMAL ],
 		// The role(s) have permission to give/remove other peers roles
-		[MODIFY_ROLE]       : [ userRoles.NORMAL ],
+		[MODIFY_ROLE]: [ userRoles.NORMAL ],
 		// The role(s) have permission to send chat messages
-		[SEND_CHAT]         : [ userRoles.NORMAL ],
+		[SEND_CHAT]: [ userRoles.NORMAL ],
 		// The role(s) have permission to moderate chat
-		[MODERATE_CHAT]     : [ userRoles.MODERATOR ],
+		[MODERATE_CHAT]: [ userRoles.MODERATOR ],
 		// The role(s) have permission to share audio
-		[SHARE_AUDIO]       : [ userRoles.NORMAL ],
+		[SHARE_AUDIO]: [ userRoles.NORMAL ],
 		// The role(s) have permission to share video
-		[SHARE_VIDEO]       : [ userRoles.NORMAL ],
+		[SHARE_VIDEO]: [ userRoles.NORMAL ],
 		// The role(s) have permission to share screen
-		[SHARE_SCREEN]      : [ userRoles.NORMAL ],
+		[SHARE_SCREEN]: [ userRoles.NORMAL ],
 		// The role(s) have permission to produce extra video
-		[EXTRA_VIDEO]       : [ userRoles.NORMAL ],
+		[EXTRA_VIDEO]: [ userRoles.NORMAL ],
 		// The role(s) have permission to share files
-		[SHARE_FILE]        : [ userRoles.NORMAL ],
+		[SHARE_FILE]: [ userRoles.NORMAL ],
 		// The role(s) have permission to moderate files
-		[MODERATE_FILES]    : [ userRoles.MODERATOR ],
+		[MODERATE_FILES]: [ userRoles.MODERATOR ],
 		// The role(s) have permission to moderate room (e.g. kick user)
-		[MODERATE_ROOM]     : [ userRoles.MODERATOR ],
+		[MODERATE_ROOM]: [ userRoles.MODERATOR ],
 		// The role(s) have permission to local record room
-		[LOCAL_RECORD_ROOM] : [ userRoles.NORMAL ]
+		[LOCAL_RECORD_ROOM]: [ userRoles.NORMAL ]
 	},
 	// Array of permissions. If no peer with the permission in question
 	// is in the room, all peers are permitted to do the action. The peers
 	// that are allowed because of this rule will not be able to do this 
 	// action as soon as a peer with the permission joins. In this example
 	// everyone will be able to lock/unlock room until a MODERATOR joins.
-	allowWhenRoleMissing : [ CHANGE_ROOM_LOCK ]
+	allowWhenRoleMissing: [ CHANGE_ROOM_LOCK ]
 };

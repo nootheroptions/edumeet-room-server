@@ -4,6 +4,14 @@ fileTracker = "wss://tracker.openwebtorrent.com"
 turnAPIKey = "Your API key"
 turnAPIURI = "https://host.domain.tld/turn"
 
+[rtcStatsOptions]
+url = ""
+useLegacy = "false"
+obfuscate = "false"
+wsPingIntervalMs = "3000"
+pollIntervalMs = "2000"
+sendSDP = "false"
+
 [tls]
 cert = "./certs/edumeet-demo-cert.pem"
 key = "./certs/edumeet-demo-key.pem"

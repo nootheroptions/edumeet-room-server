@@ -88,6 +88,38 @@ convict.addFormats({ ipaddress, url, isFloat });
 
 // config schema
 const configSchema = convict({
+	rtcStatsOptions: {
+		url: {
+			doc: 'rtcstats Server ws url',
+			format: String,
+			default: ''
+		},
+		useLegacy: {
+			doc: 'useLegacyAPI',
+			format: Boolean,
+			default: false
+		},
+		obfuscate: {
+			doc: 'obfuscate privacy sensitive IP addresses',
+			format: Boolean,
+			default: false
+		},
+		wsPingIntervalMs: {
+			doc: 'websocket ping interval in millisecond',
+			format: Number,
+			default: 3000
+		},
+		pollIntervalMs: {
+			doc: 'Stats poll interval in milisecond',
+			format: Number,
+			default: 2000
+		},
+		sendSDP: {
+			doc: 'Send SDP',
+			format: Boolean,
+			default: false
+		}
+	},
 	turnAPIKey: {
 		doc: 'TURN server key for requesting a geoip-based TURN server closest to the client.',
 		format: String,
