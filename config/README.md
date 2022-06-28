@@ -2,6 +2,12 @@
 
 | Name | Description | Format | Default value |
 | :--- | :---------- | :----- | :------------ |
+| rtcStatsOptions.url | rtcstats Server ws url | `"string"` | ``""`` |
+| rtcStatsOptions.useLegacy | useLegacyAPI | `"boolean"` | ``false`` |
+| rtcStatsOptions.obfuscate | obfuscate privacy sensitive IP addresses | `"boolean"` | ``false`` |
+| rtcStatsOptions.wsPingIntervalMs | websocket ping interval in millisecond | `"number"` | ``3000`` |
+| rtcStatsOptions.pollIntervalMs | Stats poll interval in milisecond | `"number"` | ``2000`` |
+| rtcStatsOptions.sendSDP | Send SDP | `"boolean"` | ``false`` |
 | turnAPIKey | TURN server key for requesting a geoip-based TURN server closest to the client. | `"string"` | ``""`` |
 | turnAPIURI | TURN server URL for requesting a geoip-based TURN server closest to the client. | `"string"` | ``""`` |
 | turnAPIparams.uri_schema | TURN server URL schema. | `"string"` | ``"turn"`` |
